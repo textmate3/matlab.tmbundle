@@ -5,54 +5,42 @@
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
 	<key>command</key>
-	<string>#!/usr/bin/env python
+	<string>#!/usr/bin/env python3
+"""Pull the selection out into a variable, replacing it everywhere.
 
-import sys,os
-sys.path.append(os.environ['TM_SUPPORT_PATH'] + '/lib')
+The assignment goes above the first line that mentions the selection.
+"""
+
+import os
+import sys
+
+sys.path.append(os.path.join(os.environ['TM_SUPPORT_PATH'], 'lib'))
 
 import dialog
 
-def first_occurance(arr, str):
-    """find first_occurance of str in an array of strings"""
-    line_no = 0
-    # Find first instance of `sel`
-    for line in lines:
-        try:
-            line.index(sel)
-            line_no = lines.index(line)
-            break
-        except ValueError:
-            pass
-    
-    return line_no
+
+def first_line_containing(lines, text):
+    for number, line in enumerate(lines):
+        if text in line:
+            return number
+    return 0
+
 
 lines = sys.stdin.readlines()
-sel = ''
-var = ''
+selection = os.environ.get('TM_SELECTED_TEXT')
 
-try: 
-    sel = os.environ['TM_SELECTED_TEXT']
-except KeyError:
-    pass
-else:
-    line_no = first_occurance(lines, sel)-1
-    try:
-        var = dialog.get_string(text='Enter new variable name', 
-        prompt='Variable name:')
-    except AttributeError:
-        print '% Please update your support directory'
-        var = 'var'
+if selection:
+    name = dialog.get_string(title='Introduce Variable', prompt='Variable name:') or 'var'
+    terminator = os.environ.get('TM_LINE_TERMINATOR') or ';'
 
-for line in lines[0:line_no]:
-	print line.replace(sel, var),
+    # The assignment has to come before anything that uses it, and the old
+    # version subtracted one from the line it found, which put it above the
+    # wrong line and out of the document entirely when the match was first.
+    insert_at = first_line_containing(lines, selection)
+    lines = [line.replace(selection, name) for line in lines]
+    lines.insert(insert_at, '%s = %s%s\n' % (name, selection, terminator))
 
-term = os.environ.get('TM_LINE_TERMINATOR') or ';'
-print '%s = %s%s\n' % (var, sel, term),
-
-for line in lines[line_no:]:
-	print line.replace(sel, var),
-
-</string>
+sys.stdout.writelines(lines)</string>
 	<key>input</key>
 	<string>document</string>
 	<key>keyEquivalent</key>
