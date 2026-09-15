@@ -5,34 +5,28 @@
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
 	<key>command</key>
-	<string>#!/usr/bin/env python
+	<string>#!/usr/bin/env python3
+"""Pull the selection out into a variable, on the line it is on."""
 
-import sys,os
-sys.path.append(os.environ['TM_SUPPORT_PATH'] + '/lib')
+import os
+import sys
+
+sys.path.append(os.path.join(os.environ['TM_SUPPORT_PATH'], 'lib'))
 
 import dialog
 
-line_no = int(os.environ.get('TM_LINE_NUMBER'))-1
 lines = sys.stdin.readlines()
+selection = os.environ.get('TM_SELECTED_TEXT')
 
-try: 
-    sel = os.environ['TM_SELECTED_TEXT']
-except KeyError:
-    pass
-else:
-    try:
-        var = dialog.get_string(text='Enter new variable name', 
-        prompt='Variable name:')
-    except AttributeError:
-        print '% Please update your support directory'
-        var = 'var'
+if selection:
+    line_number = int(os.environ['TM_LINE_NUMBER']) - 1
+    name = dialog.get_string(title='Introduce Variable', prompt='Variable name:') or 'var'
+    terminator = os.environ.get('TM_LINE_TERMINATOR') or ';'
 
-    term = os.environ.get('TM_LINE_TERMINATOR') or ';'
-    lines[line_no] = lines[line_no].replace(sel, var)
-    lines.insert(line_no, '%s = %s%s\n' % (var, sel, term))
+    lines[line_number] = lines[line_number].replace(selection, name)
+    lines.insert(line_number, '%s = %s%s\n' % (name, selection, terminator))
 
-for line in lines:
-	print line,</string>
+sys.stdout.writelines(lines)</string>
 	<key>input</key>
 	<string>document</string>
 	<key>keyEquivalent</key>

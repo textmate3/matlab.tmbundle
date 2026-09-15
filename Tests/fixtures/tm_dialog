@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""A stand-in for tm_dialog, so the commands can be tested without a window.
+
+It reads the request property list the way the real one does and answers the
+name in DIALOG_STUB_ANSWER, or nothing at all when that is unset, which is
+what a canceled dialog looks like.
+"""
+
+import os
+import plistlib
+import sys
+
+plistlib.loads(sys.stdin.buffer.read())
+
+answer = os.environ.get("DIALOG_STUB_ANSWER")
+if answer is None:
+    sys.stdout.buffer.write(plistlib.dumps({}))
+else:
+    sys.stdout.buffer.write(plistlib.dumps({"result": {"returnArgument": answer}}))
